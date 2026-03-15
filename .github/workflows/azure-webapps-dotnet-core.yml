@@ -1,0 +1,45 @@
+name: Build and Deploy Web API to Azure Web App
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Restore dependencies
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build --configuration Release --no-restore
+
+      - name: Publish
+        run: dotnet publish --configuration Release --output ./publish
+
+      - name: Login to Azure using OIDC
+        uses: azure/login@v2
+        with:
+          client-id: 8de575e7-60e0-4629-95a2-440f5a95050c
+          tenant-id: e12dd670-2015-470b-bbaf-dddc568c08ff
+          subscription-id: 85574ea0-cc54-419c-adf4-92dbd8c57faf
+
+      - name: Deploy to Azure Web App
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: webapi-cicd
+          package: ./publish
